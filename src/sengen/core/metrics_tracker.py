@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 import numpy as np
 import pandas as pd
-from ..core.scenario import ScenarioConfig
+from .scenario import ScenarioConfig
 @dataclass
 class MetricsTracker:
     """Tracks various metrics throughout a scenario."""

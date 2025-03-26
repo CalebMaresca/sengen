@@ -2,7 +2,7 @@
 
 import pytest
 from sengen.core.scenario import ScenarioGenerator, ScenarioConfig, ScenarioState
-from sengen.metrics.metrics_tracker import MetricsTracker
+from sengen.core.metrics_tracker import MetricsTracker
 
 @pytest.fixture
 def config():

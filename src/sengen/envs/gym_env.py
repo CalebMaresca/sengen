@@ -4,7 +4,7 @@ from typing import Dict, Optional, Tuple, Any
 import gymnasium as gym
 from gymnasium import spaces
 from ..core.scenario import ScenarioGenerator, ScenarioConfig
-from ..metrics.metrics_tracker import MetricsTracker
+from ..core.metrics_tracker import MetricsTracker
 
 class SenGenGymEnv(gym.Env):
     """Environment for SenGen scenarios."""
