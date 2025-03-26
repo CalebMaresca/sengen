@@ -1,8 +1,12 @@
 scenario:
   theme: "AI safety and ethics"
   max_steps: 5
+  max_choices: 4
   temperature: 0.7
   model_name: "gpt-4o-mini"
+  reward:
+    type: "float"
+    description: "Reward for the agent, measured in dollars of profit"
   metrics:
     utilitarian_impact:
       name: "Utilitarian Impact"

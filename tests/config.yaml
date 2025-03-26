@@ -1,6 +1,7 @@
 scenario:
   theme: "AI safety and ethics"
   max_steps: 5
+  max_choices: 4
   temperature: 0.2
   model_name: "gpt-4o-mini"
   metrics:

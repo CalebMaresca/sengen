@@ -2,7 +2,7 @@
 
 import pytest
 from sengen.core.scenario import ScenarioGenerator, ScenarioConfig, ScenarioState
-from sengen.metrics.ethical_metrics import EthicalMetrics
+from sengen.metrics.metrics_tracker import MetricsTracker
 
 @pytest.fixture
 def config():
@@ -24,7 +24,7 @@ def generator(config):
 #     generator = ScenarioGenerator(config)
 #     assert generator.config == config
 #     assert generator.metrics is not None
-#     assert isinstance(generator.metrics, EthicalMetrics)
+#     assert isinstance(generator.metrics, MetricsTracker)
 
 def test_start_scenario(generator):
     """Test starting a new scenario."""

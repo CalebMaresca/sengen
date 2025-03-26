@@ -2,7 +2,7 @@
 
 import os
 import yaml
-from sengen.envs.ethical_env import EthicalEnv
+from sengen.envs.gym_env import SenGenGymEnv
 from sengen.agents.base import LLMAgent, AgentConfig
 
 def main():
@@ -12,7 +12,7 @@ def main():
         config = yaml.safe_load(f)
     
     # Create environment
-    env = EthicalEnv(
+    env = SenGenGymEnv(
         config_path=config_path,
         render_mode="human"
     )
@@ -45,7 +45,11 @@ def main():
     print("=" * 80)
     print(f"Total reward: {total_reward}")
     print("\nFinal metrics summary:")
-    print(info["metrics_summary"])
+    metrics_summary = env.metrics_tracker.summary()
+    for metric_name, metric_data in metrics_summary.items():
+        print(f"\n{metric_name}:")
+        for key, value in metric_data.items():
+            print(f"  {key}: {value}")
 
 if __name__ == "__main__":
     main() 

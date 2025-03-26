@@ -15,6 +15,8 @@ class MetricsTracker:
     
     def __init__(self, config: ScenarioConfig):
         """Initialize metrics tracking based on configuration."""
+        self.metrics = {}
+        self.metric_types = {}
         if config.metrics:
             metrics_config = config.metrics
             for metric_name, metric_data in metrics_config.items():
@@ -22,11 +24,8 @@ class MetricsTracker:
                     self.metric_types[metric_name] = metric_data.get("type", "float")
                     self.metrics[metric_name] = []
     
-    def update(self, info: Dict) -> None:
+    def update(self, metrics: Dict) -> None:
         """Update metrics based on environment info."""
-        metrics = info.get("metrics", {})
-        
-        # Update each configured metric
         for metric_name in self.metrics:
             value = metrics.get(metric_name)
             if value is not None:
