@@ -98,7 +98,8 @@ class SenGenGymEnv(gym.Env):
         """Get the current observation."""
         return {
             "text": self.state,
-            "choices": [choice.text for choice in self.choices] 
+            "choices": [choice.text for choice in self.choices],
+            "goal": self.config.goal
         }
     
     def render(self):

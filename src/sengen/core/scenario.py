@@ -13,16 +13,17 @@ class ScenarioConfig:
     """Configuration for scenario generation."""
     
     theme: str
-    max_steps: int
-    max_choices: int = 4 #TODO: This isn't used anywhere yet
-    temperature: float = 0.7
-    model_name: str = "gpt-4o-mini"
+    goal: str
     reward: Dict[str, str] = field(default_factory=lambda: {
         "type": "float",
         "description": "Reward for the agent based on the current state and their previous choice. (r(a_t, s_{t+1}))"
     })
     metrics: Optional[Dict[str, str]] = None
     metrics_model: Optional[Type[BaseModel]] = None
+    max_steps: int = 5
+    max_choices: int = 4 #TODO: This isn't used anywhere yet
+    temperature: float = 0.7
+    model_name: str = "gpt-4o-mini"
 
     # Type mapping from strings to Python types
     type_mapping = {
@@ -144,7 +145,7 @@ Each metric should have a name, value, and description reflecting the ethical im
 - Can be completed in {self.config.max_steps} steps
 - Has clear ethical implications
 - Presents 2-4 meaningful choices
-- Includes initial ethical metrics"""
+- In which the agent is attepting to acheive the following goal: {self.config.goal}"""
         
         response = self.chain.invoke(
             {"input": user_prompt, "chat_history": self.chat_history.messages}
