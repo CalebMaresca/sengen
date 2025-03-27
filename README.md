@@ -2,6 +2,8 @@
 
 SenGen is a Python package designed to generate interactive scenarios for training and evaluating LLM-based reinforcement learning agents, with a particular focus on ethical decision making and AI safety.
 
+Note: This project is in early development stages
+
 ## Features
 
 - Dynamic scenario generation using LLMs
