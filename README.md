@@ -22,6 +22,8 @@ pip install -e .
 
 See examples/run_scenario.py for a basic implementation.
 
+Note: You will need to set your OpenAI API key as an environment variable on your system.
+
 ## Configuration
 
 SenGen uses YAML configuration files to define scenario and agent parameters:
