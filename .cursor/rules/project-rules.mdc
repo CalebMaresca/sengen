@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+This project is for developing SenGen. SenGen is a Python package designed to generate interactive scenarios for training and evaluating LLM-based reinforcement learning agents, with a particular focus on ethical decision making and AI safety.
+
+Here are some important docs you may need.
+Langchain: [langchain_llms.txt](mdc:docs/langchain_llms.txt)
+Langgraph: [langgraph_llms.txt](mdc:docs/langgraph_llms.txt)
+
+The API for both LangChain and LangGraph have changed multiple times, so you will want to reference the docs and not rely solely on your own knowledge.

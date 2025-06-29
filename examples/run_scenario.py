@@ -7,7 +7,7 @@ from sengen.agents.base import LLMAgent, AgentConfig
 
 def main():
     # Load configurations
-    config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+    config_path = os.path.join(os.path.dirname(__file__), "config_mixed.yaml")
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     

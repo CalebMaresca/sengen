@@ -3,11 +3,12 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import SystemMessage, HumanMessage
 import yaml
 import re
+
+from ..core.model_providers import ModelProviderMixin, ModelConfig, ModelProvider
 
 @dataclass
 class AgentConfig:
@@ -15,6 +16,16 @@ class AgentConfig:
     system_prompt: str = "You are a helpful AI assistant trying to acheive the goals given to you by the user while following ethical guidelines."
     model_name: str = "gpt-4o-mini"
     temperature: float = 0.2
+    # New fields for model provider support
+    provider: Optional[str] = None
+    max_tokens: Optional[int] = None
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+    device: Optional[str] = None
+    torch_dtype: Optional[str] = None
+    load_in_8bit: bool = False
+    load_in_4bit: bool = False
+    extra_params: Optional[Dict[str, Any]] = None
 
     @classmethod
     def from_yaml(cls, path: str) -> "AgentConfig":
@@ -25,8 +36,9 @@ class AgentConfig:
         agent_data = config.get("agent", {}).copy()
         return cls(**agent_data)
 
+
 class Agent(ABC):
-    """Abstract base class for SenGen agents."""
+    """Abstract base class for all agents."""
     
     @abstractmethod
     def act(self, observation: Dict[str, Any]) -> int:
@@ -38,15 +50,32 @@ class Agent(ABC):
         """Reset the agent's state."""
         pass
 
-class LLMAgent(Agent):
+
+class LLMAgent(Agent, ModelProviderMixin):
     """A simple LLM-based agent."""
     
     def __init__(self, config: AgentConfig):
         self.config = config
-        self.llm = ChatOpenAI(
-            model_name=config.model_name,
-            temperature=config.temperature
-        )
+        
+        # Create model config for the provider system
+        model_config_dict = {
+            "model_name": config.model_name,
+            "temperature": config.temperature,
+            "provider": config.provider or ModelProvider.OPENAI,
+            "max_tokens": config.max_tokens,
+            "api_key": config.api_key,
+            "base_url": config.base_url,
+            "device": config.device,
+            "torch_dtype": config.torch_dtype,
+            "load_in_8bit": config.load_in_8bit,
+            "load_in_4bit": config.load_in_4bit,
+            "extra_params": config.extra_params or {}
+        }
+        
+        model_config = self._parse_model_config(model_config_dict)
+        self.llm = self._create_llm_from_config(model_config)
+        self.model_provider = model_config.provider
+        
         self.prompt = ChatPromptTemplate.from_messages([
             ('system', self.config.system_prompt),
             ('human', """Current situation:
@@ -74,8 +103,14 @@ Choose a number between 0 and {highest_choice_number} (inclusive) corresponding 
         
         # Extract the chosen action number from the response
         try:
+            # Handle different response types based on provider
+            if hasattr(response, 'content'):
+                response_text = response.content
+            else:
+                response_text = str(response)
+            
             # Find the first integer in the response text
-            match = re.search(r'\d+', response.content)
+            match = re.search(r'\d+', response_text)
             if match:
                 action = int(match.group())
                 if 0 <= action < len(observation["choices"]):
@@ -84,7 +119,7 @@ Choose a number between 0 and {highest_choice_number} (inclusive) corresponding 
             pass
         
         # Default to first action if parsing fails
-        print("Failed to parse action from response:", response.content)
+        print("Failed to parse action from response:", response)
         return 0
     
     def reset(self) -> None:

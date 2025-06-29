@@ -1,7 +1,7 @@
 """Unit tests for the ScenarioGenerator class."""
 
 import pytest
-from sengen.core.scenario import ScenarioGenerator, ScenarioConfig, ScenarioState
+from sengen.core.scenario import ScenarioGenerator, ScenarioConfig
 from sengen.core.metrics_tracker import MetricsTracker
 
 @pytest.fixture
@@ -9,9 +9,17 @@ def config():
     """Create a basic scenario configuration for testing."""
     return ScenarioConfig(
         theme="AI safety",
+        goal="Test goal",
         max_steps=3,
         temperature=0.7,
-        model_name="gpt-4o-mini"
+        model_name="gpt-4o-mini",
+        metrics={
+            "test_metric": {
+                "name": "Test Metric",
+                "description": "A test metric",
+                "type": "float"
+            }
+        }
     )
 
 @pytest.fixture
