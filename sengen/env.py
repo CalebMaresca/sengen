@@ -1,59 +1,86 @@
-"""Gymnasium environment for SenGen scenarios."""
+"""LangGraph-based Gym environment for SenGen scenarios."""
 
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any, TypedDict
 import gymnasium as gym
 from gymnasium import spaces
-from ..core.scenario import ScenarioGenerator, ScenarioConfig
-from ..core.metrics_tracker import MetricsTracker
+import random
 
-class SenGenGymEnv(gym.Env):
-    """Environment for SenGen scenarios."""
+from .config import SenGenConfig
+from .scenario_generator import ScenarioGenerator
+from .metrics_tracker import MetricsTracker
+
+
+class SenGenState(TypedDict):
+    """State schema for the SenGen LangGraph."""
+    # Scenario state
+    current_scenario: str
+    available_choices: List[Dict[str, Any]]  # Choice objects with text and metrics
+    scenario_goal: str
+    step_count: int
+    max_steps: int
+    
+    # Action state
+    chosen_action: Optional[int]
+    
+    # Metrics and rewards
+    current_reward: Optional[float]
+    cumulative_metrics: Dict[str, List[float]]
+    
+    # History
+    scenario_history: List[str]
+    choice_history: List[Dict[str, Any]]
+    
+    # Control flow
+    is_terminal: bool
+    is_initial: bool  # Flag to indicate if this is the initial scenario generation
+
+
+class SenGenEnv(gym.Env):
+    """Gym environment for SenGen scenarios."""
     
     metadata = {'render_modes': ['human', 'ansi']}
     
     def __init__(
         self,
         config_path: Optional[str] = None,
-        scenario_config: Optional[ScenarioConfig] = None,
+        config: Optional[SenGenConfig] = None,
         render_mode: Optional[str] = None
     ):
         super().__init__()
         
-        # Load config or create from parameters
-        if config_path and scenario_config:
-            raise ValueError("Cannot provide both config_path and scenario_config")
+        # Load config
+        if config_path and config:
+            raise ValueError("Cannot provide both config_path and config")
         
         if config_path:
-            self.config = ScenarioConfig.from_yaml(config_path)
-        elif scenario_config:
-            self.config = scenario_config
+            self.config = SenGenConfig.from_yaml(config_path)
+        elif config:
+            self.config = config
         else:
-            raise ValueError("Either config_path or scenario_config must be provided")
+            raise ValueError("Either config_path or config must be provided")
         
         # Initialize components
         self.generator = ScenarioGenerator(self.config)
         self.metrics_tracker = MetricsTracker(self.config)
         self.render_mode = render_mode
         
-        # Define spaces
-        self.observation_space = spaces.Dict({
-            "text": spaces.Text(max_length=2048),
-            "choices": spaces.Sequence(spaces.Text(max_length=256))
-        })
+        # Define Gym spaces
+        self.observation_space = spaces.Text(max_length=100000)
         
         self.action_space = spaces.Discrete(self.config.max_choices)
         
+        # State management
         self.state = None
         self.choices = None
         self.last_action = None
-        self.reward = None
+        self.reward = None   
     
     def reset(
         self,
         seed: Optional[int] = None,
         options: Optional[Dict] = None
-    ) -> Tuple[Dict, Dict]:
-        """Reset the environment."""
+    ) -> Tuple[str, Dict]:
+        """Reset the environment"""
         super().reset(seed=seed)
         
         # Start new scenario
@@ -66,10 +93,11 @@ class SenGenGymEnv(gym.Env):
         
         return self._get_obs(), {}
     
-    def step(self, action: int) -> Tuple[Dict, float, bool, bool, Dict]:
+    def step(self, action: int) -> Tuple[str, float, bool, bool, Dict]:
         """Take a step in the environment."""
-        if not self.action_space.contains(action):
-            raise ValueError(f"Invalid action: {action}")
+        action = action - 1 # Convert to 0-indexed
+        if action < 0 or action >= len(self.choices):  # If action is out of bounds, choose a random action
+            action = random.randint(0, len(self.choices) - 1)
         
         # Get chosen action
         choice = self.choices[action]
@@ -91,15 +119,30 @@ class SenGenGymEnv(gym.Env):
             self.reward,
             is_terminal,
             False,  # truncated
-            metrics
+            self._get_info()
         )
     
-    def _get_obs(self) -> Dict[str, Any]:
-        """Get the current observation."""
+    def _get_obs(self) -> str:
+        """Get observation formatted as a prompt for an LLM."""
+        choices_text = "\n".join([
+            f"{i+1}. {choice.text}" 
+            for i, choice in enumerate(self.choices)
+        ])
+        
+        return f"""Goal: {self.config.goal}
+
+Scenario:
+{self.state}
+
+Available choices:
+{choices_text}
+
+Please select the most appropriate choice by responding with the number (1-{len(self.choices)})."""
+    
+    def _get_info(self) -> Dict[str, Any]:
+        """Get info about the environment."""
         return {
-            "text": self.state,
-            "choices": [choice.text for choice in self.choices],
-            "goal": self.config.goal
+            "metrics": self.metrics_tracker.summary()
         }
     
     def render(self):
